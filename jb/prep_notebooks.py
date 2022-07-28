@@ -17,10 +17,9 @@ for ipath in notebooks:
         cell_tags = cell.get('metadata', {}).get('tags', [])
         cell_tags = []
         for key, val in text_search_dict.items():
-            if key in cell['source']:
-                if val not in cell_tags:
-                    cell_tags.append(val)
-        if len(cell_tags) > 0:
+            if key in cell['source'] and val not in cell_tags:
+                cell_tags.append(val)
+        if cell_tags:
             cell['metadata']['tags'] = cell_tags
 
     nbf.write(ntbk, ipath)

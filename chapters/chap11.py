@@ -35,9 +35,9 @@ from modsim import *
 def run_simulation(system, update_func):
     frame = TimeFrame(columns=system.init.index)
     frame.loc[0] = system.init
-    
-    for t in range(0, system.t_end):
+
+    for t in range(system.t_end):
         frame.loc[t+1] = update_func(t, frame.loc[t], system)
-    
+
     return frame
 

@@ -41,11 +41,10 @@ from modsim import *
 
 def drag_force(V, system):
     rho, C_d, area = system.rho, system.C_d, system.area
-    
+
     mag = rho * vector_mag(V)**2 * C_d * area / 2
     direction = -vector_hat(V)
-    f_drag = mag * direction
-    return f_drag
+    return mag * direction
 
 from modsim import *
 

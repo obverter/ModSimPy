@@ -63,10 +63,7 @@ def cart2pol(x, y, z=None):
     rho = np.hypot(x, y)
     theta = np.arctan2(y, x)
 
-    if z is None:
-        return theta, rho
-    else:
-        return theta, rho, z
+    return (theta, rho) if z is None else (theta, rho, z)
 
 
 def pol2cart(theta, rho, z=None):
@@ -81,10 +78,7 @@ def pol2cart(theta, rho, z=None):
     x = rho * np.cos(theta)
     y = rho * np.sin(theta)
 
-    if z is None:
-        return x, y
-    else:
-        return x, y, z
+    return (x, y) if z is None else (x, y, z)
 
 from numpy import linspace
 
@@ -519,7 +513,7 @@ def run_ralston(system, slope_func, **options):
     frame.row[t_0] = init
     ts = linrange(t_0, t_end, dt) * get_units(t_end)
 
-    event_func = options.get("events", None)
+    event_func = options.get("events")
     z1 = np.nan
 
     def project(y1, t1, slopes, dt):
@@ -594,10 +588,7 @@ def fsolve(func, x0, *args, **options):
     # make the tolerance more forgiving than the default
     underride(options, xtol=1e-6)
 
-    # run fsolve
-    result = scipy.optimize.fsolve(func, x0, args=args, **options)
-
-    return result
+    return scipy.optimize.fsolve(func, x0, args=args, **options)
 
 
 def crossings(series, value):
@@ -660,8 +651,7 @@ def interpolate(series, **options):
     # call interp1d, which returns a new function object
     x = series.index
     y = series.values
-    interp_func = interp1d(x, y, **options)
-    return interp_func
+    return interp1d(x, y, **options)
 
 
 def interpolate_inverse(series, **options):
@@ -674,8 +664,7 @@ def interpolate_inverse(series, **options):
              from `b` to `a`
     """
     inverse = Series(series.index, index=series.values)
-    interp_func = interpolate(inverse, **options)
-    return interp_func
+    return interpolate(inverse, **options)
 
 
 def gradient(series, **options):
@@ -972,10 +961,7 @@ def vector_hat(v):
     """
     # check if the magnitude of the Quantity is 0
     mag = vector_mag(v)
-    if mag == 0:
-        return v
-    else:
-        return v / mag
+    return v if mag == 0 else v / mag
 
 
 def vector_perp(v):
@@ -1005,10 +991,7 @@ def vector_cross(v, w):
     """
     res = np.cross(v, w)
 
-    if len(v) == 3:
-        return Vector(*res)
-    else:
-        return res
+    return Vector(*res) if len(v) == 3 else res
 
 
 def vector_proj(v, w):

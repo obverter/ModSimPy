@@ -92,10 +92,7 @@ def cart2pol(x, y, z=None):
     rho = np.hypot(x, y)
     theta = np.arctan2(y, x)
 
-    if z is None:
-        return theta, rho
-    else:
-        return theta, rho, z
+    return (theta, rho) if z is None else (theta, rho, z)
 
 
 def pol2cart(theta, rho, z=None):
@@ -110,10 +107,7 @@ def pol2cart(theta, rho, z=None):
     x = rho * np.cos(theta)
     y = rho * np.sin(theta)
 
-    if z is None:
-        return x, y
-    else:
-        return x, y, z
+    return (x, y) if z is None else (x, y, z)
 
 
 def linspace(start, stop, num=50, **options):
@@ -134,8 +128,7 @@ def linspace(start, stop, num=50, **options):
 
     underride(options, dtype=np.float64)
 
-    array = np.linspace(start, stop, num, **options)
-    return array
+    return np.linspace(start, stop, num, **options)
 
 
 def linrange(start=0, stop=None, step=1, endpoint=False, **options):
@@ -203,10 +196,7 @@ def magnitudes(x):
             return np.array(t)
 
         # if x is a Series, return a Series of the same subtype
-        if isinstance(x, pd.Series):
-            return x.__class__(t, x.index)
-
-        return t
+        return x.__class__(t, x.index) if isinstance(x, pd.Series) else t
     except TypeError:  # not iterable
         return x
 
@@ -238,10 +228,7 @@ def get_units(x):
             return np.array(t)
 
         # if x is a Series, return a Series of the same subtype
-        if isinstance(x, pd.Series):
-            return x.__class__(t, x.index)
-
-        return t
+        return x.__class__(t, x.index) if isinstance(x, pd.Series) else t
     except TypeError:  # not iterable
         return 1
 
@@ -283,10 +270,7 @@ def require_units(x, units):
 
     returns: Quantity
     """
-    if isinstance(x, Quantity):
-        return x.to(units)
-    else:
-        return Quantity(x, units)
+    return x.to(units) if isinstance(x, Quantity) else Quantity(x, units)
 
 
 def leastsq(error_func, x0, *args, **options):
@@ -541,12 +525,9 @@ def run_odeint(system, slope_func, **options):
     # now we're ready to run `odeint` with `init` and `ts` from `system`
     array = odeint(slope_func, list(system.init), system.ts, args, **options)
 
-    # the return value from odeint is an array, so let's pack it into
-    # a TimeFrame with appropriate columns and index
-    frame = TimeFrame(
+    return TimeFrame(
         array, columns=system.init.index, index=system.ts, dtype=np.float64
     )
-    return frame
 
 
 def run_solve_ivp(system, slope_func, **options):
@@ -743,7 +724,7 @@ def run_ralston(system, slope_func, **options):
     frame.row[t_0] = init
     ts = linrange(t_0, t_end, dt) * get_units(t_end)
 
-    event_func = options.get("events", None)
+    event_func = options.get("events")
     z1 = np.nan
 
     def project(y1, t1, slopes, dt):
@@ -818,10 +799,7 @@ def fsolve(func, x0, *args, **options):
     # make the tolerance more forgiving than the default
     underride(options, xtol=1e-6)
 
-    # run fsolve
-    result = scipy.optimize.fsolve(func, x0, args=args, **options)
-
-    return result
+    return scipy.optimize.fsolve(func, x0, args=args, **options)
 
 
 def root_scalar(func, bracket, *args, **options):
@@ -859,10 +837,7 @@ def root_scalar(func, bracket, *args, **options):
     # add the bracket to the options
     underride(options, bracket=bracket)
 
-    # run root_scalar
-    res = scipy.optimize.root_scalar(func, args=args, **options)
-
-    return res
+    return scipy.optimize.root_scalar(func, args=args, **options)
 
 
 def root_bisect(error_func, bracket, *args, **options):
@@ -1006,8 +981,7 @@ def interpolate_inverse(series, **options):
              from `b` to `a`
     """
     inverse = Series(series.index, index=series.values)
-    interp_func = interpolate(inverse, **options)
-    return interp_func
+    return interpolate(inverse, **options)
 
 
 def gradient(series, **options):
@@ -1043,8 +1017,7 @@ def correlate(s1, s2, **options):
     x = magnitudes(s1)
     y = magnitudes(s2)
 
-    corr = np.correlate(x, y, **options)
-    return corr
+    return np.correlate(x, y, **options)
 
 
 def unpack(series):
@@ -1116,11 +1089,11 @@ def plot(*args, **options):
     y = magnitudes(y)
     underride(options, linewidth=2)
 
-    if style is not None:
-        lines = plt.plot(x, y, style, **options)
-    else:
-        lines = plt.plot(x, y, **options)
-    return lines
+    return (
+        plt.plot(x, y, style, **options)
+        if style is not None
+        else plt.plot(x, y, **options)
+    )
 
 
 def parse_plot_args(*args, **options):
@@ -1449,7 +1422,7 @@ class System(ModSimSeries):
 
         More than one positional argument is an error.
         """
-        if len(args) == 0:
+        if not args:
             super().__init__(list(kwargs.values()), index=kwargs)
         elif len(args) == 1:
             super().__init__(*args, copy=True)
@@ -1500,10 +1473,7 @@ def compute_abs_diff(seq):
     to_end = np.array([0], dtype=np.float64)
     diff = np.ediff1d(xs, to_end)
 
-    if isinstance(seq, Series):
-        return Series(diff, seq.index)
-    else:
-        return diff
+    return Series(diff, seq.index) if isinstance(seq, Series) else diff
 
 
 def compute_rel_diff(seq):
@@ -1757,14 +1727,12 @@ def vector_hat(v):
     # get the size of the vector
     mag = vector_mag(v)
 
-    # check if the magnitude of the Quantity is 0
-    if magnitude(mag) == 0:
-        if isinstance(v, ModSimVector):
-            return Vector(magnitude(v))
-        else:
-            return magnitude(np.asarray(v))
-    else:
+    if magnitude(mag) != 0:
         return v / mag
+    if isinstance(v, ModSimVector):
+        return Vector(magnitude(v))
+    else:
+        return magnitude(np.asarray(v))
 
 
 def vector_perp(v):
