@@ -21,15 +21,15 @@ from modsim import *
 def run_simulation(system, change_func):
     t_array = linrange(system.t_0, system.t_end, system.dt)
     n = len(t_array)
-    
+
     series = TimeSeries(index=t_array)
     series.iloc[0] = system.T_init
-    
+
     for i in range(n-1):
         t = t_array[i]
         T = series.iloc[i]
         series.iloc[i+1] = T + change_func(t, T, system)
-    
+
     system.T_final = series.iloc[-1]
     return series
 
